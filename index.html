@@ -166,4 +166,458 @@
         </div>
         <div class="flex items-center gap-8 text-sm">
           <div>
-            <span class="text-xs text-brand-cream/50 block uppercase font-bold
+            <span class="text-xs text-brand-cream/50 block uppercase font-bold tracking-wider">Contributed</span>
+            <span class="text-lg font-black text-brand-sage" id="ownerInjected">$0.00</span>
+          </div>
+          <div class="border-l border-brand-cream/20 pl-8">
+            <span class="text-xs text-brand-cream/50 block uppercase font-bold tracking-wider">CapEx Outlays</span>
+            <span class="text-lg font-black text-brand-peach" id="ownerSpent">$0.00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Charts Section -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Monthly Cash Flow -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-brand-charcoal/10 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-brand-charcoal text-base">Monthly Cash Flow Trend</h3>
+            <span class="text-xs font-semibold text-brand-charcoal/50">Operating Revenue vs OpEx with Net Trend</span>
+          </div>
+          <div class="h-72">
+            <canvas id="cashFlowChart"></canvas>
+          </div>
+        </div>
+
+        <!-- OpEx Breakdown -->
+        <div class="bg-white p-6 rounded-2xl border border-brand-charcoal/10 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-black text-brand-charcoal text-base">Expense Breakdown</h3>
+              <span class="text-xs font-semibold text-brand-charcoal/50" id="expenseChartSubtitle">By Category</span>
+            </div>
+            <!-- Dynamic Chart Toggle -->
+            <select id="expenseToggle" onchange="renderDashboard()" class="text-xs bg-brand-cream/30 border border-brand-charcoal/10 text-brand-charcoal rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-rust font-bold">
+              <option value="OPEX">OpEx Only</option>
+              <option value="ALL">All Cash Outlays</option>
+            </select>
+          </div>
+          <div class="h-72 flex items-center justify-center">
+            <canvas id="expensePieChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Transactions Ledger -->
+      <section class="bg-white rounded-2xl border border-brand-charcoal/10 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-brand-charcoal/5 flex items-center justify-between">
+          <h3 class="font-black text-brand-charcoal text-base">Recent Ledger Activity</h3>
+          <span class="text-xs font-semibold text-brand-charcoal/50" id="ledgerCount">Showing latest records</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-brand-charcoal/80">
+            <thead class="bg-brand-bg text-xs uppercase font-bold text-brand-charcoal/60 border-b border-brand-charcoal/10">
+              <tr>
+                <th class="px-6 py-3">Date</th>
+                <th class="px-6 py-3">Type</th>
+                <th class="px-6 py-3">Description / Merchant</th>
+                <th class="px-6 py-3">Category</th>
+                <th class="px-6 py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody" class="divide-y divide-brand-charcoal/5 font-medium">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs font-semibold text-brand-charcoal/40">
+    67 West RV Park Dashboard • Powered by Google Sheets & Apps Script
+  </footer>
+
+  <script>
+    const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbysriTFdmrZhg9zC3k6QebLipIHSRsWzH-bjbhJOM7Wz7ITkyydcsOYBqLZenvCxbFkqA/exec";
+    const IRS_MILEAGE_RATE = 0.67;
+
+    let rawData = null;
+    let cashFlowChartInstance = null;
+    let expensePieChartInstance = null;
+
+    async function fetchData() {
+      const refreshIcon = document.getElementById("refreshIcon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+      document.getElementById("errorState").classList.add("hidden");
+
+      try {
+        const res = await fetch(ENDPOINT_URL, {
+          method: "GET",
+          redirect: "follow",
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+        }
+
+        const text = await res.text();
+        let json;
+        
+        if (text.trim().startsWith("handleSheetsData_") || text.trim().includes("(") && text.trim().endsWith(")")) {
+          const start = text.indexOf("(") + 1;
+          const end = text.lastIndexOf(")");
+          json = JSON.parse(text.substring(start, end));
+        } else {
+          json = JSON.parse(text);
+        }
+
+        if (!json || json.status !== "success") {
+          throw new Error((json && json.message) || "Invalid data format returned by server.");
+        }
+
+        rawData = json;
+        populateYearDropdown();
+        renderDashboard();
+
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("dashboardContent").classList.remove("hidden");
+      } catch (err) {
+        console.error("Dashboard Fetch Error:", err);
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("errorState").classList.remove("hidden");
+        document.getElementById("errorMessage").innerText = err.message || "Unable to retrieve Google Sheets data.";
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function populateYearDropdown() {
+      const yearFilter = document.getElementById("yearFilter");
+      const currentSelected = yearFilter.value;
+      const years = new Set();
+
+      const items = [...(rawData.income || []), ...(rawData.expenses || [])];
+      items.forEach(item => {
+        const d = parseDate(item.date || item.timestamp);
+        if (d) years.add(d.getFullYear());
+      });
+
+      const sortedYears = Array.from(years).sort((a, b) => b - a);
+
+      yearFilter.innerHTML = '<option value="ALL">All Time</option>';
+      sortedYears.forEach(y => {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        yearFilter.appendChild(opt);
+      });
+
+      if (sortedYears.length > 0 && currentSelected === "ALL") {
+        yearFilter.value = sortedYears[0];
+      } else if (currentSelected) {
+        yearFilter.value = currentSelected;
+      }
+    }
+
+    function renderDashboard() {
+      if (!rawData) return;
+
+      const selectedYear = document.getElementById("yearFilter").value;
+      const selectedMonth = document.getElementById("monthFilter").value;
+      const expenseToggle = document.getElementById("expenseToggle").value; 
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const expenseSub = document.getElementById("expenseChartSubtitle");
+      if (selectedMonth === "ALL") {
+        expenseSub.textContent = selectedYear === "ALL" ? "All Time" : `${selectedYear} Full Year`;
+      } else {
+        expenseSub.textContent = `${monthNames[parseInt(selectedMonth)]} ${selectedYear === "ALL" ? "" : selectedYear}`;
+      }
+
+      const filterItem = item => {
+        const d = parseDate(item.date || item.timestamp);
+        if (!d) return false;
+
+        const matchesYear = (selectedYear === "ALL") || (d.getFullYear() === parseInt(selectedYear));
+        const matchesMonth = (selectedMonth === "ALL") || (d.getMonth() === parseInt(selectedMonth));
+
+        return matchesYear && matchesMonth;
+      };
+
+      const incomeList = (rawData.income || []).filter(filterItem);
+      const expenseList = (rawData.expenses || []).filter(filterItem);
+
+      let opRevenue = 0;
+      let ownerInjected = 0;
+
+      incomeList.forEach(inc => {
+        const cat = (inc.category || "").toLowerCase();
+        if (cat.includes("owner investment") || cat.includes("owner equity")) {
+          ownerInjected += inc.amount;
+        } else {
+          opRevenue += inc.amount;
+        }
+      });
+
+      let opExpenses = 0;
+      let ownerSpent = 0;
+      let totalMileage = 0;
+      const expenseByCategory = {};
+
+      expenseList.forEach(exp => {
+        const cat = (exp.category || "").toLowerCase();
+        totalMileage += (exp.mileage || 0);
+
+        const isCapEx = cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement");
+
+        if (isCapEx) {
+          ownerSpent += exp.amount;
+        } else {
+          opExpenses += exp.amount;
+        }
+
+        if (!isCapEx || expenseToggle === "ALL") {
+          const displayCat = exp.category || "Other";
+          expenseByCategory[displayCat] = (expenseByCategory[displayCat] || 0) + exp.amount;
+        }
+      });
+
+      const noi = opRevenue - opExpenses;
+      const fmt = num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+
+      document.getElementById("kpiOpRevenue").textContent = fmt(opRevenue);
+      document.getElementById("kpiOpExpenses").textContent = fmt(opExpenses);
+      
+      const kpiNOI = document.getElementById("kpiNOI");
+      kpiNOI.textContent = fmt(noi);
+      kpiNOI.className = `text-2xl font-black ${noi >= 0 ? 'text-brand-sage' : 'text-brand-rust'}`;
+
+      document.getElementById("kpiMileage").textContent = `${totalMileage.toLocaleString()} mi`;
+      document.getElementById("kpiMileageValue").textContent = `Est. Tax Deduction: ${fmt(totalMileage * IRS_MILEAGE_RATE)}`;
+
+      document.getElementById("ownerInjected").textContent = fmt(ownerInjected);
+      document.getElementById("ownerSpent").textContent = fmt(ownerSpent);
+
+      const yearOnlyIncomes = (rawData.income || []).filter(item => {
+        if (selectedYear === "ALL") return true;
+        const d = parseDate(item.date || item.timestamp);
+        return d && d.getFullYear() === parseInt(selectedYear);
+      });
+      const yearOnlyExpenses = (rawData.expenses || []).filter(item => {
+        if (selectedYear === "ALL") return true;
+        const d = parseDate(item.date || item.timestamp);
+        return d && d.getFullYear() === parseInt(selectedYear);
+      });
+
+      buildCashFlowChart(yearOnlyIncomes, yearOnlyExpenses);
+      buildExpenseChart(expenseByCategory);
+      buildLedgerTable(incomeList, expenseList);
+    }
+
+    function buildCashFlowChart(incomes, expenses) {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const revByMonth = Array(12).fill(0);
+      const expByMonth = Array(12).fill(0);
+
+      incomes.forEach(i => {
+        const cat = (i.category || "").toLowerCase();
+        if (!cat.includes("owner investment") && !cat.includes("owner equity")) {
+          const d = parseDate(i.date || i.timestamp);
+          if (d) revByMonth[d.getMonth()] += i.amount;
+        }
+      });
+
+      expenses.forEach(e => {
+        const cat = (e.category || "").toLowerCase();
+        if (!cat.includes("owner investment") && !cat.includes("startup") && !cat.includes("improvement")) {
+          const d = parseDate(e.date || e.timestamp);
+          if (d) expByMonth[d.getMonth()] += e.amount;
+        }
+      });
+
+      const netByMonth = revByMonth.map((rev, idx) => rev - expByMonth[idx]);
+
+      const ctx = document.getElementById("cashFlowChart").getContext("2d");
+      if (cashFlowChartInstance) cashFlowChartInstance.destroy();
+
+      cashFlowChartInstance = new Chart(ctx, {
+        data: {
+          labels: monthNames,
+          datasets: [
+            {
+              type: 'line',
+              label: 'Net Operating Income',
+              data: netByMonth,
+              borderColor: '#2b302a', // Brand Charcoal
+              backgroundColor: '#2b302a',
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#ebd9b4', // Cream center
+              pointBorderColor: '#2b302a',
+              pointBorderWidth: 2,
+              tension: 0.3,
+              order: 1
+            },
+            {
+              type: 'bar',
+              label: 'Operating Revenue',
+              data: revByMonth,
+              backgroundColor: '#70805c', // Brand Sage
+              borderRadius: 4,
+              order: 2
+            },
+            {
+              type: 'bar',
+              label: 'Operating Expenses',
+              data: expByMonth,
+              backgroundColor: '#d15d36', // Brand Rust
+              borderRadius: 4,
+              order: 3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { 
+              position: 'bottom', 
+              labels: { 
+                boxWidth: 12, 
+                font: { weight: 'bold', family: 'system-ui' },
+                color: '#2b302a'
+              } 
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw);
+                  return `${ctx.dataset.label}: ${val}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: v => `$${v}`, color: '#2b302a' },
+              grid: { color: 'rgba(43, 48, 42, 0.05)' }
+            },
+            x: { 
+              ticks: { color: '#2b302a', font: { weight: 'bold' } },
+              grid: { display: false } 
+            }
+          }
+        }
+      });
+    }
+
+    function buildExpenseChart(categoryMap) {
+      const labels = Object.keys(categoryMap);
+      const data = Object.values(categoryMap);
+
+      const ctx = document.getElementById("expensePieChart").getContext("2d");
+      if (expensePieChartInstance) expensePieChartInstance.destroy();
+
+      if (labels.length === 0) {
+        labels.push("No Expenses");
+        data.push(1);
+      }
+
+      // Brand Palette for Donut Chart
+      const brandColors = ['#d15d36', '#a8783e', '#70805c', '#e39364', '#2b302a', '#ebd9b4'];
+
+      expensePieChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: brandColors,
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              position: 'bottom', 
+              labels: { boxWidth: 10, font: { size: 11, weight: 'bold' }, color: '#2b302a' } 
+            }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    function buildLedgerTable(incomes, expenses) {
+      const combined = [
+        ...incomes.map(i => ({
+          date: i.date || i.timestamp,
+          type: 'Income',
+          title: i.category === 'Owner Investment' ? 'Owner Capital Contribution' : 'Site Fee / Guest Payment',
+          category: i.category,
+          amount: i.amount,
+          isCredit: true
+        })),
+        ...expenses.map(e => ({
+          date: e.date || e.timestamp,
+          type: 'Expense',
+          title: e.merchant || e.description || 'Expense',
+          category: e.category,
+          amount: e.amount,
+          isCredit: false
+        }))
+      ];
+
+      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const ledgerBody = document.getElementById("ledgerBody");
+      ledgerBody.innerHTML = '';
+
+      combined.slice(0, 15).forEach(row => {
+        const tr = document.createElement("tr");
+        const formattedDate = row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
+
+        tr.innerHTML = `
+          <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal/60">${formattedDate}</td>
+          <td class="px-6 py-3 whitespace-nowrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold tracking-wide ${row.isCredit ? 'bg-brand-sage/20 text-brand-charcoal' : 'bg-brand-cream text-brand-charcoal'}">
+              ${row.type}
+            </span>
+          </td>
+          <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal font-bold">${row.title}</td>
+          <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal/60">${row.category || '—'}</td>
+          <td class="px-6 py-3 whitespace-nowrap text-right font-black ${row.isCredit ? 'text-brand-sage' : 'text-brand-charcoal'}">
+            ${row.isCredit ? '+' : '-'}${formattedAmount}
+          </td>
+        `;
+        ledgerBody.appendChild(tr);
+      });
+
+      document.getElementById("ledgerCount").textContent = `Showing latest ${Math.min(15, combined.length)} of ${combined.length} items`;
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
