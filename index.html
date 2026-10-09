@@ -353,7 +353,7 @@
       buildLedgerTable(incomeList, expenseList);
     }
 
-    function buildCashFlowChart(incomes, expenses) {
+function buildCashFlowChart(incomes, expenses) {
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const revByMonth = Array(12).fill(0);
       const expByMonth = Array(12).fill(0);
@@ -374,33 +374,72 @@
         }
       });
 
+      // Calculate Net for each month (Operating Revenue - Operating Expenses)
+      const netByMonth = revByMonth.map((rev, idx) => rev - expByMonth[idx]);
+
       const ctx = document.getElementById("cashFlowChart").getContext("2d");
       if (cashFlowChartInstance) cashFlowChartInstance.destroy();
 
       cashFlowChartInstance = new Chart(ctx, {
-        type: 'bar',
         data: {
           labels: monthNames,
           datasets: [
             {
+              type: 'line',
+              label: 'Net Operating Income',
+              data: netByMonth,
+              borderColor: '#0284c7', // Sky-600 blue line
+              backgroundColor: '#0284c7',
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#0284c7',
+              pointBorderWidth: 2,
+              tension: 0.3, // Smooth curve
+              order: 1 // Renders on top of the bars
+            },
+            {
+              type: 'bar',
               label: 'Operating Revenue',
               data: revByMonth,
               backgroundColor: '#10b981',
-              borderRadius: 6
+              borderRadius: 6,
+              order: 2
             },
             {
+              type: 'bar',
               label: 'Operating Expenses',
               data: expByMonth,
               backgroundColor: '#f59e0b',
-              borderRadius: 6
+              borderRadius: 6,
+              order: 3
             }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: '600' } } }
+            legend: { 
+              position: 'bottom', 
+              labels: { 
+                boxWidth: 12, 
+                font: { weight: '600' } 
+              } 
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw);
+                  return `${ctx.dataset.label}: ${val}`;
+                }
+              }
+            }
           },
           scales: {
             y: {
