@@ -190,8 +190,15 @@
         <!-- OpEx Breakdown -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-base">Expense Breakdown</h3>
-            <span class="text-xs text-slate-400" id="expenseChartSubtitle">By Category</span>
+            <div>
+              <h3 class="font-bold text-slate-900 text-base">Expense Breakdown</h3>
+              <span class="text-xs text-slate-400" id="expenseChartSubtitle">By Category</span>
+            </div>
+            <!-- Dynamic Chart Toggle -->
+            <select id="expenseToggle" onchange="renderDashboard()" class="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+              <option value="OPEX">OpEx Only</option>
+              <option value="ALL">All Cash Outlays</option>
+            </select>
           </div>
           <div class="h-72 flex items-center justify-center">
             <canvas id="expensePieChart"></canvas>
@@ -244,7 +251,6 @@
       document.getElementById("errorState").classList.add("hidden");
 
       try {
-        // fetch with redirect: "follow" handles Google's 302 script redirection cleanly
         const res = await fetch(ENDPOINT_URL, {
           method: "GET",
           redirect: "follow",
@@ -260,7 +266,6 @@
         const text = await res.text();
         let json;
         
-        // Strip JSONP wrapper if present, otherwise parse direct JSON
         if (text.trim().startsWith("handleSheetsData_") || text.trim().includes("(") && text.trim().endsWith(")")) {
           const start = text.indexOf("(") + 1;
           const end = text.lastIndexOf(")");
@@ -328,6 +333,7 @@
 
       const selectedYear = document.getElementById("yearFilter").value;
       const selectedMonth = document.getElementById("monthFilter").value;
+      const expenseToggle = document.getElementById("expenseToggle").value; // 'OPEX' or 'ALL'
 
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const expenseSub = document.getElementById("expenseChartSubtitle");
@@ -371,10 +377,17 @@
         const cat = (exp.category || "").toLowerCase();
         totalMileage += (exp.mileage || 0);
 
-        if (cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement")) {
+        const isCapEx = cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement");
+
+        // Keep KPIs strict
+        if (isCapEx) {
           ownerSpent += exp.amount;
         } else {
           opExpenses += exp.amount;
+        }
+
+        // Apply toggle logic to donut chart grouping
+        if (!isCapEx || expenseToggle === "ALL") {
           const displayCat = exp.category || "Other";
           expenseByCategory[displayCat] = (expenseByCategory[displayCat] || 0) + exp.amount;
         }
@@ -529,7 +542,7 @@
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'],
+            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#f97316'],
             borderWidth: 2,
             borderColor: '#ffffff'
           }]
