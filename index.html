@@ -246,6 +246,7 @@
     let rawData = null;
     let cashFlowChartInstance = null;
     let expensePieChartInstance = null;
+    let isFirstLoad = true;
 
     async function fetchData() {
       const refreshIcon = document.getElementById("refreshIcon");
@@ -282,6 +283,11 @@
 
         rawData = json;
         populateYearDropdown();
+        // Set default to current month on first page load
+        if (isFirstLoad) {
+          document.getElementById("monthFilter").value = new Date().getMonth();
+          isFirstLoad = false;
+        }
         renderDashboard();
 
         document.getElementById("loadingState").classList.add("hidden");
