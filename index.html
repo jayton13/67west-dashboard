@@ -104,4 +104,380 @@
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <!-- Operating Revenue -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Operating Revenue</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="kpiOpRevenue">$0.00</div>
+          <p class="text-xs text-slate-500 mt-1">Site Fees & guest services (excl. equity)</p>
+        </div>
+
+        <!-- Operating Expenses -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Operating Expenses</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <i class="fa-solid fa-receipt"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="kpiOpExpenses">$0.00</div>
+          <p class="text-xs text-slate-500 mt-1">Maintenance, Utilities, Subscriptions</p>
+        </div>
+
+        <!-- Net Operating Income -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Net Operating Income</span>
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold" id="kpiNOI">$0.00</div>
+          <p class="text-xs text-slate-500 mt-1" id="kpiNOISub">Operating cash flow</p>
+        </div>
+
+        <!-- Mileage Deduction -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Business Mileage</span>
+            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <i class="fa-solid fa-truck-pickup"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-slate-900" id="kpiMileage">0 mi</div>
+          <p class="text-xs text-slate-500 mt-1" id="kpiMileageValue">Est. Tax Deduction: $0.00</p>
+        </div>
+      </section>
+
+      <!-- Owner Capital Secondary Bar -->
+      <section class="bg-slate-900 rounded-2xl p-5 text-white flex flex-wrap items-center justify-between gap-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-vault"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold tracking-tight">Owner Capital & CapEx Injections</h2>
+            <p class="text-xs text-slate-400">Equity contributed vs. capital improvements/startup outlays</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-8 text-sm">
+          <div>
+            <span class="text-xs text-slate-400 block uppercase font-medium">Contributed</span>
+            <span class="text-lg font-bold text-emerald-400" id="ownerInjected">$0.00</span>
+          </div>
+          <div class="border-l border-slate-800 pl-8">
+            <span class="text-xs text-slate-400 block uppercase font-medium">CapEx Outlays</span>
+            <span class="text-lg font-bold text-amber-300" id="ownerSpent">$0.00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Charts Section -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Monthly Cash Flow -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base">Monthly Cash Flow Trend</h3>
+            <span class="text-xs text-slate-400">Operating Revenue vs OpEx with Net Trend</span>
+          </div>
+          <div class="h-72">
+            <canvas id="cashFlowChart"></canvas>
+          </div>
+        </div>
+
+        <!-- OpEx Breakdown -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-base">Expense Breakdown</h3>
+            <span class="text-xs text-slate-400" id="expenseChartSubtitle">By Category</span>
+          </div>
+          <div class="h-72 flex items-center justify-center">
+            <canvas id="expensePieChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Transactions Ledger -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 text-base">Recent Ledger Activity</h3>
+          <span class="text-xs text-slate-400" id="ledgerCount">Showing latest records</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+              <tr>
+                <th class="px-6 py-3">Date</th>
+                <th class="px-6 py-3">Type</th>
+                <th class="px-6 py-3">Description / Merchant</th>
+                <th class="px-6 py-3">Category</th>
+                <th class="px-6 py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400">
+    67 West RV Park Dashboard • Powered by Google Sheets & Apps Script
+  </footer>
+
+  <script>
+    // Live Apps Script Endpoint
+    const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbysriTFdmrZhg9zC3k6QebLipIHSRsWzH-bjbhJOM7Wz7ITkyydcsOYBqLZenvCxbFkqA/exec";
+    const IRS_MILEAGE_RATE = 0.67; // Standard IRS rate per mile
+
+    let rawData = null;
+    let cashFlowChartInstance = null;
+    let expensePieChartInstance = null;
+
+    async function fetchData() {
+      const refreshIcon = document.getElementById("refreshIcon");
+      refreshIcon.classList.add("animate-spin");
+      document.getElementById("errorState").classList.add("hidden");
+
+      try {
+        const res = await fetch(ENDPOINT_URL);
+        const json = await res.json();
+
+        if (json.status !== "success") {
+          throw new Error(json.message || "Failed to fetch valid data.");
+        }
+
+        rawData = json;
+        populateYearDropdown();
+        renderDashboard();
+
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("dashboardContent").classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("errorState").classList.remove("hidden");
+        document.getElementById("errorMessage").innerText = err.message || "Unable to connect to Google Sheets.";
+      } finally {
+        refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+      // Handles both ISO formats and standard M/D/YYYY formats
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function populateYearDropdown() {
+      const yearFilter = document.getElementById("yearFilter");
+      const currentSelected = yearFilter.value;
+      const years = new Set();
+
+      [...rawData.income, ...rawData.expenses].forEach(item => {
+        const d = parseDate(item.date || item.timestamp);
+        if (d) years.add(d.getFullYear());
+      });
+
+      const sortedYears = Array.from(years).sort((a, b) => b - a);
+
+      yearFilter.innerHTML = '<option value="ALL">All Time</option>';
+      sortedYears.forEach(y => {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        yearFilter.appendChild(opt);
+      });
+
+      if (sortedYears.length > 0 && currentSelected === "ALL") {
+        yearFilter.value = sortedYears[0]; // Default to most recent year
+      } else if (currentSelected) {
+        yearFilter.value = currentSelected;
+      }
+    }
+
+    function renderDashboard() {
+      if (!rawData) return;
+
+      const selectedYear = document.getElementById("yearFilter").value;
+      const selectedMonth = document.getElementById("monthFilter").value;
+
+      // Update Expense Chart Subtitle
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const expenseSub = document.getElementById("expenseChartSubtitle");
+      if (selectedMonth === "ALL") {
+        expenseSub.textContent = selectedYear === "ALL" ? "All Time" : `${selectedYear} Full Year`;
+      } else {
+        expenseSub.textContent = `${monthNames[parseInt(selectedMonth)]} ${selectedYear === "ALL" ? "" : selectedYear}`;
+      }
+
+      // Filter dataset by selected year and month
+      const filterItem = item => {
+        const d = parseDate(item.date || item.timestamp);
+        if (!d) return false;
+
+        const matchesYear = (selectedYear === "ALL") || (d.getFullYear() === parseInt(selectedYear));
+        const matchesMonth = (selectedMonth === "ALL") || (d.getMonth() === parseInt(selectedMonth));
+
+        return matchesYear && matchesMonth;
+      };
+
+      const incomeList = rawData.income.filter(filterItem);
+      const expenseList = rawData.expenses.filter(filterItem);
+
+      // Separate Operating vs Owner Equity / CapEx
+      let opRevenue = 0;
+      let ownerInjected = 0;
+
+      incomeList.forEach(inc => {
+        const cat = (inc.category || "").toLowerCase();
+        if (cat.includes("owner investment") || cat.includes("owner equity")) {
+          ownerInjected += inc.amount;
+        } else {
+          opRevenue += inc.amount;
+        }
+      });
+
+      let opExpenses = 0;
+      let ownerSpent = 0;
+      let totalMileage = 0;
+      const expenseByCategory = {};
+
+      expenseList.forEach(exp => {
+        const cat = (exp.category || "").toLowerCase();
+        totalMileage += (exp.mileage || 0);
+
+        // Treat Owner Investment, Startup, and Capital Improvements as CapEx
+        if (cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement")) {
+          ownerSpent += exp.amount;
+        } else {
+          opExpenses += exp.amount;
+          const displayCat = exp.category || "Other";
+          expenseByCategory[displayCat] = (expenseByCategory[displayCat] || 0) + exp.amount;
+        }
+      });
+
+      const noi = opRevenue - opExpenses;
+
+      // Update KPIs
+      const fmt = num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+
+      document.getElementById("kpiOpRevenue").textContent = fmt(opRevenue);
+      document.getElementById("kpiOpExpenses").textContent = fmt(opExpenses);
+      
+      const kpiNOI = document.getElementById("kpiNOI");
+      kpiNOI.textContent = fmt(noi);
+      kpiNOI.className = `text-2xl font-extrabold ${noi >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+      document.getElementById("kpiMileage").textContent = `${totalMileage.toLocaleString()} mi`;
+      document.getElementById("kpiMileageValue").textContent = `Est. Tax Deduction: ${fmt(totalMileage * IRS_MILEAGE_RATE)}`;
+
+      document.getElementById("ownerInjected").textContent = fmt(ownerInjected);
+      document.getElementById("ownerSpent").textContent = fmt(ownerSpent);
+
+      // Annual datasets for the 12-month trend chart
+      const yearOnlyIncomes = rawData.income.filter(item => {
+        if (selectedYear === "ALL") return true;
+        const d = parseDate(item.date || item.timestamp);
+        return d && d.getFullYear() === parseInt(selectedYear);
+      });
+      const yearOnlyExpenses = rawData.expenses.filter(item => {
+        if (selectedYear === "ALL") return true;
+        const d = parseDate(item.date || item.timestamp);
+        return d && d.getFullYear() === parseInt(selectedYear);
+      });
+
+      buildCashFlowChart(yearOnlyIncomes, yearOnlyExpenses);
+      buildExpenseChart(expenseByCategory);
+      buildLedgerTable(incomeList, expenseList);
+    }
+
+    function buildCashFlowChart(incomes, expenses) {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const revByMonth = Array(12).fill(0);
+      const expByMonth = Array(12).fill(0);
+
+      incomes.forEach(i => {
+        const cat = (i.category || "").toLowerCase();
+        if (!cat.includes("owner investment") && !cat.includes("owner equity")) {
+          const d = parseDate(i.date || i.timestamp);
+          if (d) revByMonth[d.getMonth()] += i.amount;
+        }
+      });
+
+      expenses.forEach(e => {
+        const cat = (e.category || "").toLowerCase();
+        if (!cat.includes("owner investment") && !cat.includes("startup") && !cat.includes("improvement")) {
+          const d = parseDate(e.date || e.timestamp);
+          if (d) expByMonth[d.getMonth()] += e.amount;
+        }
+      });
+
+      const netByMonth = revByMonth.map((rev, idx) => rev - expByMonth[idx]);
+
+      const ctx = document.getElementById("cashFlowChart").getContext("2d");
+      if (cashFlowChartInstance) cashFlowChartInstance.destroy();
+
+      cashFlowChartInstance = new Chart(ctx, {
+        data: {
+          labels: monthNames,
+          datasets: [
+            {
+              type: 'line',
+              label: 'Net Operating Income',
+              data: netByMonth,
+              borderColor: '#0284c7', // Sky-600 line
+              backgroundColor: '#0284c7',
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#0284c7',
+              pointBorderWidth: 2,
+              tension: 0.3,
+              order: 1 // Renders on top of bars
+            },
+            {
+              type: 'bar',
+              label: 'Operating Revenue',
+              data: revByMonth,
+              backgroundColor: '#10b981',
+              borderRadius: 6,
+              order: 2
+            },
+            {
+              type: 'bar',
+              label: 'Operating Expenses',
+              data: expByMonth,
+              backgroundColor: '#f59e0b',
+              borderRadius: 6,
+              order: 3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { 
+              position: 'bottom', 
+              labels: { 
+                boxWidth: 12, 
+                font: { weight: '600' } 
+              } 
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw);
+                  return
