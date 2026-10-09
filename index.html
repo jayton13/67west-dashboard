@@ -239,17 +239,27 @@
     let cashFlowChartInstance = null;
     let expensePieChartInstance = null;
 
-    async function fetchData() {
+function fetchData() {
       const refreshIcon = document.getElementById("refreshIcon");
-      refreshIcon.classList.add("animate-spin");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
       document.getElementById("errorState").classList.add("hidden");
 
-      try {
-        const res = await fetch(ENDPOINT_URL);
-        const json = await res.json();
+      // Set up a global callback function that Apps Script will call
+      const callbackName = "handleSheetsData_" + Math.floor(Math.random() * 100000);
+      
+      window[callbackName] = function(json) {
+        // Cleanup script tag & callback
+        delete window[callbackName];
+        const existingScript = document.getElementById("jsonp-script");
+        if (existingScript) existingScript.remove();
 
-        if (json.status !== "success") {
-          throw new Error(json.message || "Failed to fetch valid data.");
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+
+        if (!json || json.status !== "success") {
+          document.getElementById("loadingState").classList.add("hidden");
+          document.getElementById("errorState").classList.remove("hidden");
+          document.getElementById("errorMessage").innerText = (json && json.message) || "Failed to parse data.";
+          return;
         }
 
         rawData = json;
@@ -258,14 +268,19 @@
 
         document.getElementById("loadingState").classList.add("hidden");
         document.getElementById("dashboardContent").classList.remove("hidden");
-      } catch (err) {
-        console.error(err);
+      };
+
+      // Create and inject the script tag (bypasses CORS restrictions)
+      const script = document.createElement("script");
+      script.id = "jsonp-script";
+      script.src = `${ENDPOINT_URL}?callback=${callbackName}&t=${Date.now()}`;
+      script.onerror = function() {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
         document.getElementById("loadingState").classList.add("hidden");
         document.getElementById("errorState").classList.remove("hidden");
-        document.getElementById("errorMessage").innerText = err.message || "Unable to connect to Google Sheets.";
-      } finally {
-        refreshIcon.classList.remove("animate-spin");
-      }
+        document.getElementById("errorMessage").innerText = "Unable to reach Google Sheets endpoint. Verify deployment permissions.";
+      };
+      document.body.appendChild(script);
     }
 
     function parseDate(dateStr) {
