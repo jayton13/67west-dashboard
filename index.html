@@ -16,12 +16,13 @@
         extend: {
           colors: {
             brand: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d'
+              bg: '#f9f6f0',       // Lightened cream for a clean page background
+              cream: '#ebd9b4',    // Logo cream
+              gold: '#a8783e',     // RV PARK text / Texas map
+              charcoal: '#2b302a', // 67 WEST text / Trees
+              rust: '#d15d36',     // Sun / Sky
+              peach: '#e39364',    // Sunset gradient
+              sage: '#70805c'      // Cactus / Leaves
             }
           }
         }
@@ -29,34 +30,35 @@
     }
   </script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+<body class="bg-brand-bg text-brand-charcoal antialiased min-h-screen font-sans">
 
   <!-- Header / Navigation -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+  <header class="bg-white border-b border-brand-charcoal/10 sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center font-bold text-lg shadow-sm">
+        <!-- Logo Icon Block -->
+        <div class="w-10 h-10 rounded-xl bg-brand-charcoal text-brand-cream flex items-center justify-center font-bold text-lg shadow-sm border border-brand-charcoal/20">
           67W
         </div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-tight">67 West RV Park</h1>
-          <p class="text-xs text-slate-500">Financial & Operations Management</p>
+          <h1 class="text-lg font-black text-brand-charcoal tracking-tight leading-tight">67 West RV Park</h1>
+          <p class="text-xs text-brand-charcoal/60 font-medium">Financial & Operations Management</p>
         </div>
       </div>
 
       <div class="flex items-center gap-3 ml-auto">
         <!-- Year Filter -->
         <div class="flex items-center gap-2">
-          <label for="yearFilter" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Year</label>
-          <select id="yearFilter" onchange="renderDashboard()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg px-3 py-1.5 font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+          <label for="yearFilter" class="text-xs font-bold text-brand-charcoal/50 uppercase tracking-wider">Year</label>
+          <select id="yearFilter" onchange="renderDashboard()" class="bg-brand-cream/30 hover:bg-brand-cream/60 text-brand-charcoal text-sm rounded-lg px-3 py-1.5 font-semibold border border-brand-charcoal/10 focus:outline-none focus:ring-2 focus:ring-brand-rust transition">
             <option value="ALL">All Time</option>
           </select>
         </div>
 
         <!-- Month Filter -->
         <div class="flex items-center gap-2">
-          <label for="monthFilter" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Month</label>
-          <select id="monthFilter" onchange="renderDashboard()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg px-3 py-1.5 font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+          <label for="monthFilter" class="text-xs font-bold text-brand-charcoal/50 uppercase tracking-wider">Month</label>
+          <select id="monthFilter" onchange="renderDashboard()" class="bg-brand-cream/30 hover:bg-brand-cream/60 text-brand-charcoal text-sm rounded-lg px-3 py-1.5 font-semibold border border-brand-charcoal/10 focus:outline-none focus:ring-2 focus:ring-brand-rust transition">
             <option value="ALL">All Months</option>
             <option value="0">January</option>
             <option value="1">February</option>
@@ -74,7 +76,7 @@
         </div>
 
         <!-- Refresh Button -->
-        <button onclick="fetchData()" id="refreshBtn" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg border border-slate-200 transition">
+        <button onclick="fetchData()" id="refreshBtn" class="flex items-center gap-2 bg-brand-charcoal hover:bg-brand-charcoal/90 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
           <i class="fa-solid fa-rotate-right" id="refreshIcon"></i>
           <span class="hidden sm:inline">Refresh</span>
         </button>
@@ -87,13 +89,13 @@
 
     <!-- Loading State -->
     <div id="loadingState" class="flex flex-col items-center justify-center py-24 space-y-4">
-      <div class="w-12 h-12 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></div>
-      <p class="text-slate-500 font-medium text-sm animate-pulse">Syncing with Google Sheets...</p>
+      <div class="w-12 h-12 border-4 border-brand-cream border-t-brand-rust rounded-full animate-spin"></div>
+      <p class="text-brand-charcoal/60 font-bold text-sm animate-pulse">Syncing with Google Sheets...</p>
     </div>
 
     <!-- Error State -->
-    <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-center gap-3 text-sm">
-      <i class="fa-solid fa-circle-exclamation text-lg text-red-500 flex-shrink-0"></i>
+    <div id="errorState" class="hidden bg-brand-rust/10 border border-brand-rust text-brand-rust px-6 py-4 rounded-xl flex items-center gap-3 text-sm font-medium">
+      <i class="fa-solid fa-circle-exclamation text-lg"></i>
       <div id="errorMessage">Failed to load data.</div>
     </div>
 
@@ -103,511 +105,65 @@
       <!-- Primary KPI Cards -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <!-- Operating Revenue -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+        <div class="bg-white p-5 rounded-2xl border border-brand-charcoal/10 shadow-sm">
+          <div class="flex items-center justify-between text-brand-charcoal/60 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Operating Revenue</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-brand-sage/20 text-brand-sage flex items-center justify-center">
               <i class="fa-solid fa-arrow-trend-up"></i>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900" id="kpiOpRevenue">$0.00</div>
-          <p class="text-xs text-slate-500 mt-1">Site Fees & guest services (excl. equity)</p>
+          <div class="text-2xl font-black text-brand-charcoal" id="kpiOpRevenue">$0.00</div>
+          <p class="text-xs text-brand-charcoal/60 mt-1 font-medium">Site Fees & guest services (excl. equity)</p>
         </div>
 
         <!-- Operating Expenses -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+        <div class="bg-white p-5 rounded-2xl border border-brand-charcoal/10 shadow-sm">
+          <div class="flex items-center justify-between text-brand-charcoal/60 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Operating Expenses</span>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-brand-rust/20 text-brand-rust flex items-center justify-center">
               <i class="fa-solid fa-receipt"></i>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900" id="kpiOpExpenses">$0.00</div>
-          <p class="text-xs text-slate-500 mt-1">Maintenance, Utilities, Subscriptions</p>
+          <div class="text-2xl font-black text-brand-charcoal" id="kpiOpExpenses">$0.00</div>
+          <p class="text-xs text-brand-charcoal/60 mt-1 font-medium">Maintenance, Utilities, Subscriptions</p>
         </div>
 
         <!-- Net Operating Income -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+        <div class="bg-white p-5 rounded-2xl border border-brand-charcoal/10 shadow-sm">
+          <div class="flex items-center justify-between text-brand-charcoal/60 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Net Operating Income</span>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-brand-gold/20 text-brand-gold flex items-center justify-center">
               <i class="fa-solid fa-scale-balanced"></i>
             </div>
           </div>
-          <div class="text-2xl font-extrabold" id="kpiNOI">$0.00</div>
-          <p class="text-xs text-slate-500 mt-1" id="kpiNOISub">Operating cash flow</p>
+          <div class="text-2xl font-black" id="kpiNOI">$0.00</div>
+          <p class="text-xs text-brand-charcoal/60 mt-1 font-medium" id="kpiNOISub">Operating cash flow</p>
         </div>
 
         <!-- Mileage Deduction -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+        <div class="bg-white p-5 rounded-2xl border border-brand-charcoal/10 shadow-sm">
+          <div class="flex items-center justify-between text-brand-charcoal/60 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Business Mileage</span>
-            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-brand-peach/30 text-brand-charcoal flex items-center justify-center">
               <i class="fa-solid fa-truck-pickup"></i>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900" id="kpiMileage">0 mi</div>
-          <p class="text-xs text-slate-500 mt-1" id="kpiMileageValue">Est. Tax Deduction: $0.00</p>
+          <div class="text-2xl font-black text-brand-charcoal" id="kpiMileage">0 mi</div>
+          <p class="text-xs text-brand-charcoal/60 mt-1 font-medium" id="kpiMileageValue">Est. Tax Deduction: $0.00</p>
         </div>
       </section>
 
       <!-- Owner Capital Secondary Bar -->
-      <section class="bg-slate-900 rounded-2xl p-5 text-white flex flex-wrap items-center justify-between gap-6 shadow-sm">
+      <section class="bg-brand-charcoal rounded-2xl p-5 text-brand-cream flex flex-wrap items-center justify-between gap-6 shadow-sm border border-brand-charcoal/20">
         <div class="flex items-center gap-4">
-          <div class="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center text-lg">
+          <div class="w-10 h-10 rounded-xl bg-white/10 text-brand-cream flex items-center justify-center text-lg">
             <i class="fa-solid fa-vault"></i>
           </div>
           <div>
-            <h2 class="text-sm font-semibold tracking-tight">Owner Capital & CapEx Injections</h2>
-            <p class="text-xs text-slate-400">Equity contributed vs. capital improvements/startup outlays</p>
+            <h2 class="text-sm font-bold tracking-tight">Owner Capital & CapEx Injections</h2>
+            <p class="text-xs text-brand-cream/70 font-medium">Equity contributed vs. capital improvements/startup outlays</p>
           </div>
         </div>
         <div class="flex items-center gap-8 text-sm">
           <div>
-            <span class="text-xs text-slate-400 block uppercase font-medium">Contributed</span>
-            <span class="text-lg font-bold text-emerald-400" id="ownerInjected">$0.00</span>
-          </div>
-          <div class="border-l border-slate-800 pl-8">
-            <span class="text-xs text-slate-400 block uppercase font-medium">CapEx Outlays</span>
-            <span class="text-lg font-bold text-amber-300" id="ownerSpent">$0.00</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Visual Charts Section -->
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Monthly Cash Flow -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-base">Monthly Cash Flow Trend</h3>
-            <span class="text-xs text-slate-400">Operating Revenue vs OpEx with Net Trend</span>
-          </div>
-          <div class="h-72">
-            <canvas id="cashFlowChart"></canvas>
-          </div>
-        </div>
-
-        <!-- OpEx Breakdown -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-slate-900 text-base">Expense Breakdown</h3>
-              <span class="text-xs text-slate-400" id="expenseChartSubtitle">By Category</span>
-            </div>
-            <!-- Dynamic Chart Toggle -->
-            <select id="expenseToggle" onchange="renderDashboard()" class="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
-              <option value="OPEX">OpEx Only</option>
-              <option value="ALL">All Cash Outlays</option>
-            </select>
-          </div>
-          <div class="h-72 flex items-center justify-center">
-            <canvas id="expensePieChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Recent Transactions Ledger -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="font-bold text-slate-900 text-base">Recent Ledger Activity</h3>
-          <span class="text-xs text-slate-400" id="ledgerCount">Showing latest records</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-600">
-            <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
-              <tr>
-                <th class="px-6 py-3">Date</th>
-                <th class="px-6 py-3">Type</th>
-                <th class="px-6 py-3">Description / Merchant</th>
-                <th class="px-6 py-3">Category</th>
-                <th class="px-6 py-3 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="ledgerBody" class="divide-y divide-slate-100 font-medium">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400">
-    67 West RV Park Dashboard • Powered by Google Sheets & Apps Script
-  </footer>
-
-  <script>
-    const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbysriTFdmrZhg9zC3k6QebLipIHSRsWzH-bjbhJOM7Wz7ITkyydcsOYBqLZenvCxbFkqA/exec";
-    const IRS_MILEAGE_RATE = 0.67;
-
-    let rawData = null;
-    let cashFlowChartInstance = null;
-    let expensePieChartInstance = null;
-
-    async function fetchData() {
-      const refreshIcon = document.getElementById("refreshIcon");
-      if (refreshIcon) refreshIcon.classList.add("animate-spin");
-      document.getElementById("errorState").classList.add("hidden");
-
-      try {
-        const res = await fetch(ENDPOINT_URL, {
-          method: "GET",
-          redirect: "follow",
-          headers: {
-            "Accept": "application/json"
-          }
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
-        }
-
-        const text = await res.text();
-        let json;
-        
-        if (text.trim().startsWith("handleSheetsData_") || text.trim().includes("(") && text.trim().endsWith(")")) {
-          const start = text.indexOf("(") + 1;
-          const end = text.lastIndexOf(")");
-          json = JSON.parse(text.substring(start, end));
-        } else {
-          json = JSON.parse(text);
-        }
-
-        if (!json || json.status !== "success") {
-          throw new Error((json && json.message) || "Invalid data format returned by server.");
-        }
-
-        rawData = json;
-        populateYearDropdown();
-        renderDashboard();
-
-        document.getElementById("loadingState").classList.add("hidden");
-        document.getElementById("dashboardContent").classList.remove("hidden");
-      } catch (err) {
-        console.error("Dashboard Fetch Error:", err);
-        document.getElementById("loadingState").classList.add("hidden");
-        document.getElementById("errorState").classList.remove("hidden");
-        document.getElementById("errorMessage").innerText = err.message || "Unable to retrieve Google Sheets data.";
-      } finally {
-        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
-      }
-    }
-
-    function parseDate(dateStr) {
-      if (!dateStr) return null;
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    function populateYearDropdown() {
-      const yearFilter = document.getElementById("yearFilter");
-      const currentSelected = yearFilter.value;
-      const years = new Set();
-
-      const items = [...(rawData.income || []), ...(rawData.expenses || [])];
-      items.forEach(item => {
-        const d = parseDate(item.date || item.timestamp);
-        if (d) years.add(d.getFullYear());
-      });
-
-      const sortedYears = Array.from(years).sort((a, b) => b - a);
-
-      yearFilter.innerHTML = '<option value="ALL">All Time</option>';
-      sortedYears.forEach(y => {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.textContent = y;
-        yearFilter.appendChild(opt);
-      });
-
-      if (sortedYears.length > 0 && currentSelected === "ALL") {
-        yearFilter.value = sortedYears[0];
-      } else if (currentSelected) {
-        yearFilter.value = currentSelected;
-      }
-    }
-
-    function renderDashboard() {
-      if (!rawData) return;
-
-      const selectedYear = document.getElementById("yearFilter").value;
-      const selectedMonth = document.getElementById("monthFilter").value;
-      const expenseToggle = document.getElementById("expenseToggle").value; // 'OPEX' or 'ALL'
-
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      const expenseSub = document.getElementById("expenseChartSubtitle");
-      if (selectedMonth === "ALL") {
-        expenseSub.textContent = selectedYear === "ALL" ? "All Time" : `${selectedYear} Full Year`;
-      } else {
-        expenseSub.textContent = `${monthNames[parseInt(selectedMonth)]} ${selectedYear === "ALL" ? "" : selectedYear}`;
-      }
-
-      const filterItem = item => {
-        const d = parseDate(item.date || item.timestamp);
-        if (!d) return false;
-
-        const matchesYear = (selectedYear === "ALL") || (d.getFullYear() === parseInt(selectedYear));
-        const matchesMonth = (selectedMonth === "ALL") || (d.getMonth() === parseInt(selectedMonth));
-
-        return matchesYear && matchesMonth;
-      };
-
-      const incomeList = (rawData.income || []).filter(filterItem);
-      const expenseList = (rawData.expenses || []).filter(filterItem);
-
-      let opRevenue = 0;
-      let ownerInjected = 0;
-
-      incomeList.forEach(inc => {
-        const cat = (inc.category || "").toLowerCase();
-        if (cat.includes("owner investment") || cat.includes("owner equity")) {
-          ownerInjected += inc.amount;
-        } else {
-          opRevenue += inc.amount;
-        }
-      });
-
-      let opExpenses = 0;
-      let ownerSpent = 0;
-      let totalMileage = 0;
-      const expenseByCategory = {};
-
-      expenseList.forEach(exp => {
-        const cat = (exp.category || "").toLowerCase();
-        totalMileage += (exp.mileage || 0);
-
-        const isCapEx = cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement");
-
-        // Keep KPIs strict
-        if (isCapEx) {
-          ownerSpent += exp.amount;
-        } else {
-          opExpenses += exp.amount;
-        }
-
-        // Apply toggle logic to donut chart grouping
-        if (!isCapEx || expenseToggle === "ALL") {
-          const displayCat = exp.category || "Other";
-          expenseByCategory[displayCat] = (expenseByCategory[displayCat] || 0) + exp.amount;
-        }
-      });
-
-      const noi = opRevenue - opExpenses;
-      const fmt = num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-
-      document.getElementById("kpiOpRevenue").textContent = fmt(opRevenue);
-      document.getElementById("kpiOpExpenses").textContent = fmt(opExpenses);
-      
-      const kpiNOI = document.getElementById("kpiNOI");
-      kpiNOI.textContent = fmt(noi);
-      kpiNOI.className = `text-2xl font-extrabold ${noi >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
-
-      document.getElementById("kpiMileage").textContent = `${totalMileage.toLocaleString()} mi`;
-      document.getElementById("kpiMileageValue").textContent = `Est. Tax Deduction: ${fmt(totalMileage * IRS_MILEAGE_RATE)}`;
-
-      document.getElementById("ownerInjected").textContent = fmt(ownerInjected);
-      document.getElementById("ownerSpent").textContent = fmt(ownerSpent);
-
-      const yearOnlyIncomes = (rawData.income || []).filter(item => {
-        if (selectedYear === "ALL") return true;
-        const d = parseDate(item.date || item.timestamp);
-        return d && d.getFullYear() === parseInt(selectedYear);
-      });
-      const yearOnlyExpenses = (rawData.expenses || []).filter(item => {
-        if (selectedYear === "ALL") return true;
-        const d = parseDate(item.date || item.timestamp);
-        return d && d.getFullYear() === parseInt(selectedYear);
-      });
-
-      buildCashFlowChart(yearOnlyIncomes, yearOnlyExpenses);
-      buildExpenseChart(expenseByCategory);
-      buildLedgerTable(incomeList, expenseList);
-    }
-
-    function buildCashFlowChart(incomes, expenses) {
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const revByMonth = Array(12).fill(0);
-      const expByMonth = Array(12).fill(0);
-
-      incomes.forEach(i => {
-        const cat = (i.category || "").toLowerCase();
-        if (!cat.includes("owner investment") && !cat.includes("owner equity")) {
-          const d = parseDate(i.date || i.timestamp);
-          if (d) revByMonth[d.getMonth()] += i.amount;
-        }
-      });
-
-      expenses.forEach(e => {
-        const cat = (e.category || "").toLowerCase();
-        if (!cat.includes("owner investment") && !cat.includes("startup") && !cat.includes("improvement")) {
-          const d = parseDate(e.date || e.timestamp);
-          if (d) expByMonth[d.getMonth()] += e.amount;
-        }
-      });
-
-      const netByMonth = revByMonth.map((rev, idx) => rev - expByMonth[idx]);
-
-      const ctx = document.getElementById("cashFlowChart").getContext("2d");
-      if (cashFlowChartInstance) cashFlowChartInstance.destroy();
-
-      cashFlowChartInstance = new Chart(ctx, {
-        data: {
-          labels: monthNames,
-          datasets: [
-            {
-              type: 'line',
-              label: 'Net Operating Income',
-              data: netByMonth,
-              borderColor: '#0284c7',
-              backgroundColor: '#0284c7',
-              borderWidth: 3,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              pointBackgroundColor: '#ffffff',
-              pointBorderColor: '#0284c7',
-              pointBorderWidth: 2,
-              tension: 0.3,
-              order: 1
-            },
-            {
-              type: 'bar',
-              label: 'Operating Revenue',
-              data: revByMonth,
-              backgroundColor: '#10b981',
-              borderRadius: 6,
-              order: 2
-            },
-            {
-              type: 'bar',
-              label: 'Operating Expenses',
-              data: expByMonth,
-              backgroundColor: '#f59e0b',
-              borderRadius: 6,
-              order: 3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false
-          },
-          plugins: {
-            legend: { 
-              position: 'bottom', 
-              labels: { 
-                boxWidth: 12, 
-                font: { weight: '600' } 
-              } 
-            },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw);
-                  return `${ctx.dataset.label}: ${val}`;
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { callback: v => `$${v}` },
-              grid: { color: '#f1f5f9' }
-            },
-            x: { grid: { display: false } }
-          }
-        }
-      });
-    }
-
-    function buildExpenseChart(categoryMap) {
-      const labels = Object.keys(categoryMap);
-      const data = Object.values(categoryMap);
-
-      const ctx = document.getElementById("expensePieChart").getContext("2d");
-      if (expensePieChartInstance) expensePieChartInstance.destroy();
-
-      if (labels.length === 0) {
-        labels.push("No Expenses");
-        data.push(1);
-      }
-
-      expensePieChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#f97316'],
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
-          },
-          cutout: '68%'
-        }
-      });
-    }
-
-    function buildLedgerTable(incomes, expenses) {
-      const combined = [
-        ...incomes.map(i => ({
-          date: i.date || i.timestamp,
-          type: 'Income',
-          title: i.category === 'Owner Investment' ? 'Owner Capital Contribution' : 'Site Fee / Guest Payment',
-          category: i.category,
-          amount: i.amount,
-          isCredit: true
-        })),
-        ...expenses.map(e => ({
-          date: e.date || e.timestamp,
-          type: 'Expense',
-          title: e.merchant || e.description || 'Expense',
-          category: e.category,
-          amount: e.amount,
-          isCredit: false
-        }))
-      ];
-
-      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      const ledgerBody = document.getElementById("ledgerBody");
-      ledgerBody.innerHTML = '';
-
-      combined.slice(0, 15).forEach(row => {
-        const tr = document.createElement("tr");
-        const formattedDate = row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-        const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
-
-        tr.innerHTML = `
-          <td class="px-6 py-3 whitespace-nowrap text-slate-500">${formattedDate}</td>
-          <td class="px-6 py-3 whitespace-nowrap">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${row.isCredit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}">
-              ${row.type}
-            </span>
-          </td>
-          <td class="px-6 py-3 whitespace-nowrap text-slate-900">${row.title}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-slate-500">${row.category || '—'}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-right font-bold ${row.isCredit ? 'text-emerald-600' : 'text-slate-900'}">
-            ${row.isCredit ? '+' : '-'}${formattedAmount}
-          </td>
-        `;
-        ledgerBody.appendChild(tr);
-      });
-
-      document.getElementById("ledgerCount").textContent = `Showing latest ${Math.min(15, combined.length)} of ${combined.length} items`;
-    }
-
-    fetchData();
-  </script>
-</body>
-</html>
+            <span class="text-xs text-brand-cream/50 block uppercase font-bold
