@@ -93,8 +93,8 @@
 
     <!-- Error State -->
     <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-center gap-3 text-sm">
-      <i class="fa-solid fa-circle-exclamation text-lg text-red-500"></i>
-      <div id="errorMessage">Failed to load data. Please verify your Apps Script URL.</div>
+      <i class="fa-solid fa-circle-exclamation text-lg text-red-500 flex-shrink-0"></i>
+      <div id="errorMessage">Failed to load data.</div>
     </div>
 
     <!-- Dashboard Content -->
@@ -231,35 +231,46 @@
   </footer>
 
   <script>
-    // Live Apps Script Endpoint
     const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbysriTFdmrZhg9zC3k6QebLipIHSRsWzH-bjbhJOM7Wz7ITkyydcsOYBqLZenvCxbFkqA/exec";
-    const IRS_MILEAGE_RATE = 0.67; // Standard IRS rate per mile
+    const IRS_MILEAGE_RATE = 0.67;
 
     let rawData = null;
     let cashFlowChartInstance = null;
     let expensePieChartInstance = null;
 
-function fetchData() {
+    async function fetchData() {
       const refreshIcon = document.getElementById("refreshIcon");
       if (refreshIcon) refreshIcon.classList.add("animate-spin");
       document.getElementById("errorState").classList.add("hidden");
 
-      // Set up a global callback function that Apps Script will call
-      const callbackName = "handleSheetsData_" + Math.floor(Math.random() * 100000);
-      
-      window[callbackName] = function(json) {
-        // Cleanup script tag & callback
-        delete window[callbackName];
-        const existingScript = document.getElementById("jsonp-script");
-        if (existingScript) existingScript.remove();
+      try {
+        // fetch with redirect: "follow" handles Google's 302 script redirection cleanly
+        const res = await fetch(ENDPOINT_URL, {
+          method: "GET",
+          redirect: "follow",
+          headers: {
+            "Accept": "application/json"
+          }
+        });
 
-        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+        }
+
+        const text = await res.text();
+        let json;
+        
+        // Strip JSONP wrapper if present, otherwise parse direct JSON
+        if (text.trim().startsWith("handleSheetsData_") || text.trim().includes("(") && text.trim().endsWith(")")) {
+          const start = text.indexOf("(") + 1;
+          const end = text.lastIndexOf(")");
+          json = JSON.parse(text.substring(start, end));
+        } else {
+          json = JSON.parse(text);
+        }
 
         if (!json || json.status !== "success") {
-          document.getElementById("loadingState").classList.add("hidden");
-          document.getElementById("errorState").classList.remove("hidden");
-          document.getElementById("errorMessage").innerText = (json && json.message) || "Failed to parse data.";
-          return;
+          throw new Error((json && json.message) || "Invalid data format returned by server.");
         }
 
         rawData = json;
@@ -268,24 +279,18 @@ function fetchData() {
 
         document.getElementById("loadingState").classList.add("hidden");
         document.getElementById("dashboardContent").classList.remove("hidden");
-      };
-
-      // Create and inject the script tag (bypasses CORS restrictions)
-      const script = document.createElement("script");
-      script.id = "jsonp-script";
-      script.src = `${ENDPOINT_URL}?callback=${callbackName}&t=${Date.now()}`;
-      script.onerror = function() {
-        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      } catch (err) {
+        console.error("Dashboard Fetch Error:", err);
         document.getElementById("loadingState").classList.add("hidden");
         document.getElementById("errorState").classList.remove("hidden");
-        document.getElementById("errorMessage").innerText = "Unable to reach Google Sheets endpoint. Verify deployment permissions.";
-      };
-      document.body.appendChild(script);
+        document.getElementById("errorMessage").innerText = err.message || "Unable to retrieve Google Sheets data.";
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
     }
 
     function parseDate(dateStr) {
       if (!dateStr) return null;
-      // Handles both ISO formats and standard M/D/YYYY formats
       const d = new Date(dateStr);
       return isNaN(d.getTime()) ? null : d;
     }
@@ -295,7 +300,8 @@ function fetchData() {
       const currentSelected = yearFilter.value;
       const years = new Set();
 
-      [...rawData.income, ...rawData.expenses].forEach(item => {
+      const items = [...(rawData.income || []), ...(rawData.expenses || [])];
+      items.forEach(item => {
         const d = parseDate(item.date || item.timestamp);
         if (d) years.add(d.getFullYear());
       });
@@ -311,7 +317,7 @@ function fetchData() {
       });
 
       if (sortedYears.length > 0 && currentSelected === "ALL") {
-        yearFilter.value = sortedYears[0]; // Default to most recent year
+        yearFilter.value = sortedYears[0];
       } else if (currentSelected) {
         yearFilter.value = currentSelected;
       }
@@ -323,7 +329,6 @@ function fetchData() {
       const selectedYear = document.getElementById("yearFilter").value;
       const selectedMonth = document.getElementById("monthFilter").value;
 
-      // Update Expense Chart Subtitle
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const expenseSub = document.getElementById("expenseChartSubtitle");
       if (selectedMonth === "ALL") {
@@ -332,7 +337,6 @@ function fetchData() {
         expenseSub.textContent = `${monthNames[parseInt(selectedMonth)]} ${selectedYear === "ALL" ? "" : selectedYear}`;
       }
 
-      // Filter dataset by selected year and month
       const filterItem = item => {
         const d = parseDate(item.date || item.timestamp);
         if (!d) return false;
@@ -343,10 +347,9 @@ function fetchData() {
         return matchesYear && matchesMonth;
       };
 
-      const incomeList = rawData.income.filter(filterItem);
-      const expenseList = rawData.expenses.filter(filterItem);
+      const incomeList = (rawData.income || []).filter(filterItem);
+      const expenseList = (rawData.expenses || []).filter(filterItem);
 
-      // Separate Operating vs Owner Equity / CapEx
       let opRevenue = 0;
       let ownerInjected = 0;
 
@@ -368,7 +371,6 @@ function fetchData() {
         const cat = (exp.category || "").toLowerCase();
         totalMileage += (exp.mileage || 0);
 
-        // Treat Owner Investment, Startup, and Capital Improvements as CapEx
         if (cat.includes("owner investment") || cat.includes("startup") || cat.includes("owner equity") || cat.includes("improvement")) {
           ownerSpent += exp.amount;
         } else {
@@ -379,8 +381,6 @@ function fetchData() {
       });
 
       const noi = opRevenue - opExpenses;
-
-      // Update KPIs
       const fmt = num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
 
       document.getElementById("kpiOpRevenue").textContent = fmt(opRevenue);
@@ -396,13 +396,12 @@ function fetchData() {
       document.getElementById("ownerInjected").textContent = fmt(ownerInjected);
       document.getElementById("ownerSpent").textContent = fmt(ownerSpent);
 
-      // Annual datasets for the 12-month trend chart
-      const yearOnlyIncomes = rawData.income.filter(item => {
+      const yearOnlyIncomes = (rawData.income || []).filter(item => {
         if (selectedYear === "ALL") return true;
         const d = parseDate(item.date || item.timestamp);
         return d && d.getFullYear() === parseInt(selectedYear);
       });
-      const yearOnlyExpenses = rawData.expenses.filter(item => {
+      const yearOnlyExpenses = (rawData.expenses || []).filter(item => {
         if (selectedYear === "ALL") return true;
         const d = parseDate(item.date || item.timestamp);
         return d && d.getFullYear() === parseInt(selectedYear);
@@ -447,7 +446,7 @@ function fetchData() {
               type: 'line',
               label: 'Net Operating Income',
               data: netByMonth,
-              borderColor: '#0284c7', // Sky-600 line
+              borderColor: '#0284c7',
               backgroundColor: '#0284c7',
               borderWidth: 3,
               pointRadius: 4,
@@ -456,7 +455,7 @@ function fetchData() {
               pointBorderColor: '#0284c7',
               pointBorderWidth: 2,
               tension: 0.3,
-              order: 1 // Renders on top of bars
+              order: 1
             },
             {
               type: 'bar',
@@ -495,4 +494,107 @@ function fetchData() {
               callbacks: {
                 label: ctx => {
                   const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw);
-                  return
+                  return `${ctx.dataset.label}: ${val}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: v => `$${v}` },
+              grid: { color: '#f1f5f9' }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function buildExpenseChart(categoryMap) {
+      const labels = Object.keys(categoryMap);
+      const data = Object.values(categoryMap);
+
+      const ctx = document.getElementById("expensePieChart").getContext("2d");
+      if (expensePieChartInstance) expensePieChartInstance.destroy();
+
+      if (labels.length === 0) {
+        labels.push("No Expenses");
+        data.push(1);
+      }
+
+      expensePieChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    function buildLedgerTable(incomes, expenses) {
+      const combined = [
+        ...incomes.map(i => ({
+          date: i.date || i.timestamp,
+          type: 'Income',
+          title: i.category === 'Owner Investment' ? 'Owner Capital Contribution' : 'Site Fee / Guest Payment',
+          category: i.category,
+          amount: i.amount,
+          isCredit: true
+        })),
+        ...expenses.map(e => ({
+          date: e.date || e.timestamp,
+          type: 'Expense',
+          title: e.merchant || e.description || 'Expense',
+          category: e.category,
+          amount: e.amount,
+          isCredit: false
+        }))
+      ];
+
+      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const ledgerBody = document.getElementById("ledgerBody");
+      ledgerBody.innerHTML = '';
+
+      combined.slice(0, 15).forEach(row => {
+        const tr = document.createElement("tr");
+        const formattedDate = row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
+
+        tr.innerHTML = `
+          <td class="px-6 py-3 whitespace-nowrap text-slate-500">${formattedDate}</td>
+          <td class="px-6 py-3 whitespace-nowrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${row.isCredit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}">
+              ${row.type}
+            </span>
+          </td>
+          <td class="px-6 py-3 whitespace-nowrap text-slate-900">${row.title}</td>
+          <td class="px-6 py-3 whitespace-nowrap text-slate-500">${row.category || '—'}</td>
+          <td class="px-6 py-3 whitespace-nowrap text-right font-bold ${row.isCredit ? 'text-emerald-600' : 'text-slate-900'}">
+            ${row.isCredit ? '+' : '-'}${formattedAmount}
+          </td>
+        `;
+        ledgerBody.appendChild(tr);
+      });
+
+      document.getElementById("ledgerCount").textContent = `Showing latest ${Math.min(15, combined.length)} of ${combined.length} items`;
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
