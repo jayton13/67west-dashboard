@@ -534,7 +534,7 @@
       });
     }
 
-    function buildExpenseChart(categoryMap) {
+function buildExpenseChart(categoryMap) {
       const labels = Object.keys(categoryMap);
       const data = Object.values(categoryMap);
 
@@ -548,6 +548,36 @@
 
       // Brand Palette for Donut Chart
       const brandColors = ['#d15d36', '#a8783e', '#70805c', '#e39364', '#2b302a', '#ebd9b4'];
+
+      // Custom Chart.js plugin to draw the total in the center
+      const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw: function(chart) {
+          const width = chart.width;
+          const ctx = chart.ctx;
+          
+          ctx.restore();
+          // Set font size and style for the center text
+          ctx.font = "900 1.25rem system-ui"; 
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#2b302a"; // Brand Charcoal
+
+          // Calculate total (ignore the dummy '1' if there are no expenses)
+          let total = 0;
+          if (chart.data.labels[0] !== "No Expenses") {
+            total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+          }
+          
+          const text = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total);
+          
+          // Calculate center positions
+          const textX = Math.round((width - ctx.measureText(text).width) / 2);
+          const textY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+
+          ctx.fillText(text, textX, textY);
+          ctx.save();
+        }
+      };
 
       expensePieChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -568,7 +598,6 @@
               position: 'bottom', 
               labels: { boxWidth: 10, font: { size: 11, weight: 'bold' }, color: '#2b302a' } 
             },
-            // ADD THIS TOOLTIP BLOCK:
             tooltip: {
               callbacks: {
                 label: ctx => {
@@ -578,8 +607,9 @@
               }
             }
           },
-          cutout: '68%'
-        }
+          cutout: '75%' // Widened from 68% to make room for the text
+        },
+        plugins: [centerTextPlugin] // Inject the text drawer here
       });
     }
 
