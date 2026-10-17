@@ -1,0 +1,16 @@
+{
+  "name": "67 West RV Park Dashboard",
+  "short_name": "67 West",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#424026",
+  "theme_color": "#424026",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
