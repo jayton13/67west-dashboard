@@ -106,6 +106,33 @@
     <!-- Dashboard Content -->
     <div id="dashboardContent" class="hidden space-y-8">
 
+      <!-- Bank Balances Section (NEW) -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Operating Checking -->
+        <div class="bg-brand-charcoal p-8 rounded-2xl shadow-sm border border-brand-charcoal flex flex-col justify-between">
+          <div class="flex items-center justify-between text-brand-cream/70 text-sm font-bold uppercase tracking-wider mb-4">
+            <span>Operating Checking</span>
+            <div class="w-12 h-12 rounded-xl bg-white/10 text-brand-cream flex items-center justify-center text-xl">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+          </div>
+          <div class="text-4xl sm:text-5xl font-black text-brand-cream tracking-tight" id="ui-checking-balance">$0.00</div>
+          <p class="text-sm text-brand-cream/50 mt-2 font-medium">Available Cash Balance</p>
+        </div>
+
+        <!-- Spark Card -->
+        <div class="bg-white p-8 rounded-2xl border border-brand-charcoal/10 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between text-brand-charcoal/60 text-sm font-bold uppercase tracking-wider mb-4">
+            <span>Spark Credit Card</span>
+            <div class="w-12 h-12 rounded-xl bg-brand-rust/10 text-brand-rust flex items-center justify-center text-xl">
+              <i class="fa-regular fa-credit-card"></i>
+            </div>
+          </div>
+          <div class="text-4xl sm:text-5xl font-black text-brand-charcoal tracking-tight" id="ui-spark-balance">$0.00</div>
+          <p class="text-sm text-brand-charcoal/50 mt-2 font-medium">Current Outstanding Balance</p>
+        </div>
+      </section>
+
       <!-- Primary KPI Cards -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <!-- Operating Revenue -->
@@ -405,6 +432,13 @@
 
       const noi = opRevenue - opExpenses;
       const fmt = num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+
+      // Populate Balances Section
+      const sparkBalance = (rawData.balances && rawData.balances.sparkCard) ? rawData.balances.sparkCard : 0;
+      const checkingBalance = (rawData.balances && rawData.balances.operatingChecking) ? rawData.balances.operatingChecking : 0;
+      
+      document.getElementById("ui-checking-balance").textContent = fmt(checkingBalance);
+      document.getElementById("ui-spark-balance").textContent = fmt(sparkBalance);
 
       document.getElementById("kpiOpRevenue").textContent = fmt(opRevenue);
       document.getElementById("kpiOpExpenses").textContent = fmt(opExpenses);
