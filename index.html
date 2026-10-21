@@ -654,7 +654,7 @@ function buildExpenseChart(categoryMap) {
       });
     }
 
-    function buildLedgerTable(incomes, expenses) {
+function buildLedgerTable(incomes, expenses) {
       const combined = [
         ...incomes.map(i => ({
           date: i.date || i.timestamp,
@@ -683,19 +683,25 @@ function buildExpenseChart(categoryMap) {
         const tr = document.createElement("tr");
         const parsedDate = parseDate(row.date);
         const formattedDate = parsedDate ? parsedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-        const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
+        
+        // Identify refunds and format absolute amounts to prevent double negative signs
+        const isRefund = !row.isCredit && row.amount < 0;
+        const isEffectiveCredit = row.isCredit || isRefund;
+        const absAmount = Math.abs(row.amount);
+        const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(absAmount);
+        const badgeText = isRefund ? 'Refund' : row.type;
 
         tr.innerHTML = `
           <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal/60">${formattedDate}</td>
           <td class="px-6 py-3 whitespace-nowrap">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold tracking-wide ${row.isCredit ? 'bg-brand-sage/20 text-brand-charcoal' : 'bg-brand-cream text-brand-charcoal'}">
-              ${row.type}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold tracking-wide ${isEffectiveCredit ? 'bg-brand-sage/20 text-brand-charcoal' : 'bg-brand-cream text-brand-charcoal'}">
+              ${badgeText}
             </span>
           </td>
           <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal font-bold">${row.title}</td>
           <td class="px-6 py-3 whitespace-nowrap text-brand-charcoal/60">${row.category || '—'}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-right font-black ${row.isCredit ? 'text-brand-sage' : 'text-brand-charcoal'}">
-            ${row.isCredit ? '+' : '-'}${formattedAmount}
+          <td class="px-6 py-3 whitespace-nowrap text-right font-black ${isEffectiveCredit ? 'text-brand-sage' : 'text-brand-charcoal'}">
+            ${isEffectiveCredit ? '+' : '-'}${formattedAmount}
           </td>
         `;
         ledgerBody.appendChild(tr);
