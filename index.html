@@ -333,17 +333,14 @@
       }
     }
 
-  function parseDate(dateStr) {
-      if (!dateStr) return null;
-      // Append noon time to YYYY-MM-DD strings to avoid the UTC timezone shift
-      let dateToParse = dateStr;
-      if (typeof dateStr === 'string' && dateStr.length === 10) {
-        dateToParse += 'T12:00:00'; 
-  }
-  
-  const d = new Date(dateToParse);
-  return isNaN(d.getTime()) ? null : d;
-}
+    function parseDate(dateStr) {
+      if (!dateStr) return null;      
+      // Force it to string and grab exactly the first 10 characters (YYYY-MM-DD)
+      const shortDate = String(dateStr).substring(0, 10);      
+      // Append noon time to avoid the midnight UTC shift backward
+      const d = new Date(shortDate + 'T12:00:00');      
+      return isNaN(d.getTime()) ? null : d;
+    }
 
     function populateYearDropdown() {
       const yearFilter = document.getElementById("yearFilter");
@@ -684,7 +681,8 @@ function buildExpenseChart(categoryMap) {
 
       combined.forEach(row => {
         const tr = document.createElement("tr");
-        const formattedDate = row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        const parsedDate = parseDate(row.date);
+        const formattedDate = parsedDate ? parsedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
         const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
 
         tr.innerHTML = `
