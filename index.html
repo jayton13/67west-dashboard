@@ -682,7 +682,7 @@ function buildExpenseChart(categoryMap) {
       const ledgerBody = document.getElementById("ledgerBody");
       ledgerBody.innerHTML = '';
 
-      combined.slice(0, 15).forEach(row => {
+      combined.forEach(row => {
         const tr = document.createElement("tr");
         const formattedDate = row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
         const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.amount);
@@ -703,7 +703,7 @@ function buildExpenseChart(categoryMap) {
         ledgerBody.appendChild(tr);
       });
 
-      document.getElementById("ledgerCount").textContent = `Showing latest ${Math.min(15, combined.length)} of ${combined.length} items`;
+      document.getElementById("ledgerCount").textContent = `Showing all ${combined.length} items`;
     }
 
     fetchData();
